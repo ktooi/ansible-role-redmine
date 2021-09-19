@@ -1,0 +1,107 @@
+---
+- name: Get version of passenger
+  shell: gem list passenger
+  changed_when: false
+  check_mode: false
+  register: gem_result
+
+- set_fact:
+    passenger_version: "{{ gem_result.stdout | regex_search(regexp, '\\1') | first }}"
+  vars:
+    regexp: '^passenger\s*\(([0-9.]*)\)'
+  changed_when: false
+
+- name: Install header files to build passenger module
+  apt:
+    name: "{{ redmine_build_passenger_pkgs }}"
+    state: present
+  become: true
+
+- name: Get user home directory
+  shell: >
+    getent passwd {{ ruby_install_gems_user }} | awk -F: '{ print $6 }'
+  changed_when: false
+  check_mode: false
+  register: user_home
+
+- name: Build passenger module
+  command:
+    cmd: "{{ user_home.stdout }}/.gem/ruby/2.7.0/bin/passenger-install-apache2-module --auto --languages ruby"
+    creates: "{{ user_home.stdout }}/.gem/ruby/2.7.0/gems/passenger-{{ passenger_version }}/buildout/apache2/mod_passenger.so"
+  become: true
+  become_user: "{{ ruby_install_gems_user }}"
+
+- name: Make sure apache2 modules directory is exists
+  file:
+    path: "{{ redmine_apache_mods_dir }}"
+    owner: root
+    group: root
+    mode: '0755'
+    state: directory
+    recurse: true
+  become: true
+
+- name: Make sure passenger home directory is exists
+  file:
+    path: "{{ redmine_passenger_home_dir }}"
+    owner: root
+    group: root
+    mode: '0755'
+    state: directory
+    recurse: true
+  become: true
+
+- name: Make sure mod_passenger.so is exists
+  copy:
+    src: "{{ user_home.stdout }}/.gem/ruby/2.7.0/gems/passenger-{{ passenger_version }}/buildout/apache2/mod_passenger.so"
+    dest: "{{ redmine_apache_mods_dir }}/mod_passenger.so"
+    owner: root
+    group: root
+    mode: '0644'
+    remote_src: true
+  become: true
+
+- name: Create passenger.load file to apache2 load passenger module
+  template:
+    src: passenger.load.j2
+    dest: "{{ redmine_apache_conf_mods_ava_dir }}/passenger.load"
+    owner: root
+    group: root
+    mode: '0644'
+  vars:
+    passenger_module_path: "{{ redmine_apache_mods_dir }}/mod_passenger.so"
+  become: true
+
+- name: Make sure passenger home directory
+  copy:
+    src: "{{ user_home.stdout }}/.gem/ruby/2.7.0/gems/passenger-{{ passenger_version }}/"
+    dest: "{{ redmine_passenger_home_dir }}"
+    owner: root
+    group: root
+    remote_src: true
+  become: true
+
+- name: Create passenger.load file to apache2 load passenger module
+  template:
+    src: passenger.conf.j2
+    dest: "{{ redmine_apache_conf_mods_ava_dir }}/passenger.conf"
+    owner: root
+    group: root
+    mode: '0644'
+  vars:
+    passenger_home_dir: "{{ redmine_passenger_home_dir }}"
+  become: true
+
+- name: Make sure apache loads passenger module
+  file:
+    src: "{{ redmine_apache_conf_mods_ava_dir }}/passenger.load"
+    dest: "{{ redmine_apache_conf_mods_en_dir }}/passenger.load"
+    state: link
+  become: true
+
+- name: Make sure apache loads passenger config
+  file:
+    src: "{{ redmine_apache_conf_mods_ava_dir }}/passenger.conf"
+    dest: "{{ redmine_apache_conf_mods_en_dir }}/passenger.conf"
+    state: link
+  become: true

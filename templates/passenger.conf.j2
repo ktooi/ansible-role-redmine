@@ -1,0 +1,5 @@
+<IfModule mod_passenger.c>
+  PassengerRoot {{ passenger_home_dir }}
+  PassengerDefaultRuby /usr/local/bin/ruby
+  PassengerDefaultUser {{ redmine_process_user }}
+</IfModule>

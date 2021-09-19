@@ -1,0 +1,60 @@
+---
+- name: Create config/database.yml
+  template:
+    src: database.yml.j2
+    dest: "{{ redmine_dir }}/config/database.yml"
+    owner: "{{ redmine_process_user }}"
+    group: "root"
+    mode: 0660
+  become: true
+
+- name: bundler
+  bundler:
+    chdir: "{{ redmine_dir }}"
+    extra_args: --without development test
+  become: true
+
+- name: Generate secret token
+  command:
+    chdir: "{{ redmine_dir }}"
+    cmd: bin/rake generate_secret_token
+    creates: "{{ redmine_dir }}/config/initializers"
+  become: true
+
+- name: Ensure owner of directories
+  file:
+    path: "{{ redmine_dir }}/{{ item.path }}"
+    owner: "{{ redmine_process_user }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default(omit) }}"
+    recurse: "{{ item.recurse | default(omit) }}"
+    state: directory
+  with_items:
+    - path: log/
+      mode: '0750'
+    - path: config/initializers
+      mode: '0500'
+    - path: tmp/
+      mode: '0770'
+      recurse: true
+  become: true
+
+- name: Ensure owner of files
+  file:
+    path: "{{ redmine_dir }}/{{ item.path }}"
+    owner: "{{ redmine_process_user }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default(omit) }}"
+    state: file
+  with_items:
+    - path: log/production.log
+    - path: log/development.log
+    - path: log/test.log
+  become: true
+
+- name: Ensure owner of environment.rb to running specified user as the owner
+  file:
+    path: "{{ redmine_dir }}/config/environment.rb"
+    owner: "{{ redmine_process_user }}"
+    group: root
+  become: true

@@ -1,0 +1,17 @@
+{% for env, conf in redmine_config_database.items() %}
+{{ env }}:
+  adapter: {{ conf.adapter }}
+  database: {{ conf.database }}
+{% if conf.host is defined %}
+  host: {{ conf.host }}
+{% endif %}
+{% if conf.username is defined %}
+  username: {{ conf.username }}
+{% endif %}
+{% if conf.password is defined %}
+  password: {{ conf.password }}
+{% endif %}
+{% if conf.encoding is defined %}
+  encoding: {{ conf.encoding }}
+{% endif %}
+{% endfor %}

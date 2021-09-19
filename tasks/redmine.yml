@@ -1,0 +1,38 @@
+---
+
+- name: Download redmine
+  get_url:
+    url: "{{ redmine_download_url }}"
+    dest: "/tmp/redmine-{{ redmine_version }}.tar.gz"
+
+- name: Extract redmine
+  unarchive:
+    src: "/tmp/redmine-{{ redmine_version }}.tar.gz"
+    dest: "/var/lib/"
+    owner: root
+    group: root
+    remote_src: true
+  become: true
+
+- name: redmine
+  file:
+    src: "/var/lib/redmine-{{ redmine_version }}"
+    dest: "{{ redmine_dir }}"
+    state: link
+  become: true
+
+- name: config
+  template:
+    src: redmine.conf.j2
+    dest: "{{ redmine_apache_conf_sites_ava_dir }}/redmine.conf"
+    owner: root
+    group: root
+    mode: 0644
+  become: true
+
+- name: config
+  file:
+    src: "{{ redmine_apache_conf_sites_ava_dir }}/redmine.conf"
+    dest: "{{ redmine_apache_conf_sites_en_dir }}/redmine.conf"
+    state: link
+  become: true

@@ -1,0 +1,33 @@
+---
+redmine_build_passenger_pkgs:
+  - libcurl4-openssl-dev
+  - apache2-dev
+  - libapr1-dev
+  - libaprutil1-dev
+
+redmine_process_user: redmine
+redmine_version: 4.2.2
+redmine_download_url: "https://www.redmine.org/releases/redmine-{{ redmine_version }}.tar.gz"
+redmine_apache_user: "www-data"
+redmine_apache_mods_dir: /usr/local/lib/apache2/modules
+redmine_apache_conf_mods_ava_dir: /etc/apache2/mods-available
+redmine_apache_conf_mods_en_dir: /etc/apache2/mods-enabled
+redmine_apache_conf_sites_ava_dir: /etc/apache2/sites-available
+redmine_apache_conf_sites_en_dir: /etc/apache2/sites-enabled
+redmine_passenger_home_dir: /var/www/passenger
+redmine_dir: /var/lib/redmine
+
+redmine_config_database:
+  production:
+    adapter: sqlite3
+    database: db/redmine.sqlite3
+  development:
+    adapter: sqlite3
+    database: db/redmine_development.sqlite3
+  test:
+    adapter: sqlite3
+    database: db/redmine_test.sqlite3
+
+# Credentials for super user of PostgreSQL.
+redmine_db_psql_super_user: postgres
+redmine_db_psql_super_password: postgres

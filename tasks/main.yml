@@ -1,0 +1,4 @@
+---
+- include_tasks: passenger.yml
+- include_tasks: redmine.yml
+- include_tasks: config-redmine.yml
