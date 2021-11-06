@@ -32,8 +32,13 @@
   with_items:
     - path: log/
       mode: '0750'
+    - path: files/
+      mode: '0770'
+    - path: db/
+      mode: '0775'
     - path: config/initializers
-      mode: '0500'
+      mode: '0700'
+    - path: public/plugin_assets/
     - path: tmp/
       mode: '0770'
       recurse: true
